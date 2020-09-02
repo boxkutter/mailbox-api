@@ -9,7 +9,8 @@ Note to self..
 python -m venv venv 
 .\venv\Scripts\activate
 python.exe -m pip install --upgrade pip
- $env:FLASK_ENV="development"
+$env:FLASK_ENV="development"
+$env:FLASKAPP="app.py"
 
 # Install required python modules
 

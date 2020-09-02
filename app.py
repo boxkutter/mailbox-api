@@ -1,5 +1,6 @@
 """Mailbox API"""
 import os
+import sys
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -9,6 +10,8 @@ from sqlalchemy import Column, Integer, String, DateTime
 #from flask_jwt_extended import JWTManager, jwt_required, create_access_token
 
 app = Flask(__name__)
+
+# app.config.from_pyfile('config.py')
 
 # Set at user login
 OID=1
@@ -91,9 +94,14 @@ def db_test():
                 password = "qweasd"
                )
 
-    board = Board(subject = "My Message Board",
+    board1 = Board(subject = "My Message Board",
                   uid = 1,
                   created = datetime.strptime("2017-09-05 09:45:28", '%Y-%m-%d %H:%M:%S')
+                  )
+
+    board2 = Board(subject = "Another Board",
+                  uid = 1,
+                  created = datetime.strptime("2017-05-15 09:45:28", '%Y-%m-%d %H:%M:%S')
                   )
 
     message1 = Message(bid = 1,
@@ -120,6 +128,18 @@ def db_test():
                       created = datetime.strptime("2017-09-05 11:40:00", '%Y-%m-%d %H:%M:%S')
                      )
 
+    message5 = Message(bid = 2,
+                      uid = 1,
+                      message = "What's this one about?",
+                      created = datetime.strptime("2018-09-05 11:40:00", '%Y-%m-%d %H:%M:%S')
+                     )
+
+    message6 = Message(bid = 2,
+                      uid = 2,
+                      message = "I like it!",
+                      created = datetime.strptime("2018-09-06 11:40:00", '%Y-%m-%d %H:%M:%S')
+                     )
+
     attachment = Attachment(mid = 1,
                             kb = 256,
                             link = 'https://www.google.com/download.zip',
@@ -139,11 +159,14 @@ def db_test():
     db.session.add(user1)
     db.session.add(user2)
     db.session.add(user3)
-    db.session.add(board)
+    db.session.add(board1)
+    db.session.add(board2)
     db.session.add(message1)
     db.session.add(message2)
     db.session.add(message3)
     db.session.add(message4)
+    db.session.add(message5)
+    db.session.add(message6)
     db.session.add(attachment)
     db.session.add(timeline)
 
@@ -219,18 +242,29 @@ def user_detail(uid: int):
 
 @app.route('/message-board')
 def message_board():
-    """List all my board messages"""
-    msg = ''
-    query = Message.query.order_by('bid').all()
-    for message in query:
-        #msg = msg + ' ' + message
-        msg = message
+    """List all the messages on boards Im subscribed to"""
+  
+    conversations = []
+    for instance1 in db.session.query(Board).order_by(Board.bid):
+        x = {
+            "bid": instance1.bid,
+            "subject": instance1.subject 
+        } 
 
-    return jsonify(msg)
+        messages = []
+        for instance2 in db.session.query(Message).filter_by(bid=instance1.bid).order_by(Message.bid):
+            y = {
+                "mid": instance2.mid,
+                "uid": instance2.uid,
+                "message": instance2.message,
+            }
+            messages.append(y)
 
+        x['messages'] = messages
+        conversations.append(x)
 
-    #result = messages_schema.dump(messages_list)
-    #return jsonify(result)
+    return jsonify(conversations)
+
 
 
 @app.route('/boards')
@@ -420,6 +454,14 @@ class Organization(db.Model):
     oid = Column(Integer, primary_key=True)
     name = Column(String, unique=True)
     url = Column(String, nullable=True)
+
+    # def __init__(self, name):
+    #     self.name = name
+
+    def serialize(self):
+        return {"id": self.oid,
+                "name": self.name,
+                "url": self.url}
 
 
 class User(db.Model):
