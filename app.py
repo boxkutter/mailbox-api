@@ -10,10 +10,12 @@ from sqlalchemy import Column, Integer, String, DateTime
 
 app = Flask(__name__)
 
-# CONFIG
-
+# Set at user login
 OID=1
 UID=1
+
+
+# CONFIG
 
 DATABASE='mailbox.db'
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -60,10 +62,13 @@ def db_drop():
 @app.cli.command('db_test')
 def db_test():
     """Some info"""
-    org = Organization(name = "Yella Org Ltd.",
+    org1 = Organization(name = "Yella Org Ltd.",
                        url = 'http://www.yella.com'
                       )
 
+    org2 = Organization(name = "Big Ltd.",
+                       url = 'http://www.big.com'
+                      )
 
     user1 = User(oid=1,
                 first_name = "John",
@@ -77,6 +82,13 @@ def db_test():
                 last_name = "Blue",
                 email = "ellie@gmail.com",
                 password = "123abC"
+               )
+
+    user3 = User(oid=2,
+                first_name = "Bill",
+                last_name = "Eon",
+                email = "eon@gmail.com",
+                password = "qweasd"
                )
 
     board = Board(subject = "My Message Board",
@@ -122,9 +134,11 @@ def db_test():
                        )
 
 
-    db.session.add(org)
+    db.session.add(org1)
+    db.session.add(org2)
     db.session.add(user1)
     db.session.add(user2)
+    db.session.add(user3)
     db.session.add(board)
     db.session.add(message1)
     db.session.add(message2)
@@ -134,7 +148,7 @@ def db_test():
     db.session.add(timeline)
 
     db.session.commit()
-    print('Database test data added')
+    print('Test data added')
 
 
 
@@ -149,11 +163,16 @@ def home():
         "Git": "https://github.com/boxkutter/mailbox-api",
     }
 
+@app.route("/info")
+def info():
+    """Default info"""
+    return {
+        "App": "mailbox-api",
+        "API version": "1",
+        "Git": "https://github.com/boxkutter/mailbox-api",
+    }
 
-@app.route('/not_found')
-def not_found():
-    """Page not found"""
-    return jsonify(message='Not found'), 404
+
 
 
 # Admin functions
@@ -164,6 +183,17 @@ def organizations():
     organizations_list = Organization.query.all()
     result = organizations_schema.dump(organizations_list)
     return jsonify(result)
+
+
+@app.route('/organization/<int:oid>')
+def organization_detail(oid: int):
+    """Get organization details"""
+    org = Organization.query.filter_by(oid=oid).first()
+    if org:
+        result = organization_schema.dump(org)
+        return jsonify(result)
+    else:
+        return jsonify(message="That organization doesn't exist"), 401
 
 
 @app.route('/users', methods=['GET'])
@@ -186,6 +216,22 @@ def user_detail(uid: int):
 
 
 # User functions
+
+@app.route('/message-board')
+def message_board():
+    """List all my board messages"""
+    msg = ''
+    query = Message.query.order_by('bid').all()
+    for message in query:
+        #msg = msg + ' ' + message
+        msg = message
+
+    return jsonify(msg)
+
+
+    #result = messages_schema.dump(messages_list)
+    #return jsonify(result)
+
 
 @app.route('/boards')
 def boards():
@@ -225,7 +271,7 @@ def message_content(mid: int):
         return jsonify(message="That message doesn't exist"), 401
 
 
-#brd = Board.query.filter_by(bid=messages_list.bid).first()
+
 
 
 
