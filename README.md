@@ -1,5 +1,9 @@
 # mailbox-api
 
+Warning. Python beginner project!
+
+Note to self..
+
 # Setup python3 development environment
 
 python -m venv venv 
