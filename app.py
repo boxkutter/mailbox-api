@@ -15,7 +15,7 @@ app = Flask(__name__)
 
 # Set at user login
 OID=1
-UID=1
+UID=2
 
 
 # CONFIG
@@ -104,6 +104,22 @@ def db_test():
                   created = datetime.strptime("2017-05-15 09:45:28", '%Y-%m-%d %H:%M:%S')
                   )
 
+    subscriber1 = Subscriber(bid = 1,
+                        uid = 1,
+                  )
+    
+    subscriber2 = Subscriber(bid = 1,
+                        uid = 2,
+                  )
+
+    subscriber3 = Subscriber(bid = 2,
+                        uid = 2,
+                  )
+
+    subscriber4 = Subscriber(bid = 2,
+                        uid = 3,
+                  )
+
     message1 = Message(bid = 1,
                       uid = 1,
                       message = "Hey",
@@ -161,6 +177,10 @@ def db_test():
     db.session.add(user3)
     db.session.add(board1)
     db.session.add(board2)
+    db.session.add(subscriber1)
+    db.session.add(subscriber2)
+    db.session.add(subscriber3)
+    db.session.add(subscriber4)
     db.session.add(message1)
     db.session.add(message2)
     db.session.add(message3)
@@ -238,33 +258,44 @@ def user_detail(uid: int):
         return jsonify(message="That user doesn't exist"), 401
 
 
+@app.route('/subscribers', methods=['GET'])
+def subscribers():
+    """List all subscribers"""
+    subscribers_list = Subscriber.query.order_by('sid')
+    result = subscribers_schema.dump(subscribers_list)
+    return jsonify(result)
+
+
 # User functions
 
 @app.route('/message-board')
 def message_board():
     """List all the messages on boards Im subscribed to"""
   
-    conversations = []
-    for instance1 in db.session.query(Board).order_by(Board.bid):
-        x = {
-            "bid": instance1.bid,
-            "subject": instance1.subject 
-        } 
+    subscriptions = []
+    for subscription in db.session.query(Subscriber).filter_by(uid=UID):
+        board = db.session.query(Board).filter_by(bid=subscription.bid).first()
 
         messages = []
-        for instance2 in db.session.query(Message).filter_by(bid=instance1.bid).order_by(Message.bid):
-            y = {
-                "mid": instance2.mid,
-                "uid": instance2.uid,
-                "message": instance2.message,
+        for message in db.session.query(Message).filter_by(bid=board.bid):
+            msg = {
+                "mid": message.mid,
+                "uid": message.uid,
+                "message": message.message 
             }
-            messages.append(y)
+            messages.append(msg)
 
-        x['messages'] = messages
-        conversations.append(x)
+        subscribed = { 
+            "bid": board.bid, 
+            "subject": board.subject, 
+            "uid": board.uid,
+            "messages": messages
+        }
+        subscriptions.append(subscribed)
+        
+    return jsonify(subscriptions)
 
-    return jsonify(conversations)
-
+  
 
 
 @app.route('/boards')
@@ -483,6 +514,13 @@ class Board(db.Model):
     uid = Column(Integer) # owner
     created = Column(DateTime)
 
+class Subscriber(db.Model):
+    """Links users to message boards"""
+    __tablename__ = 'subscribers'
+    sid = Column(Integer, primary_key=True)
+    bid = Column(Integer) # board
+    uid = Column(Integer) # subscriber
+
 
 class Message(db.Model):
     """Some info"""
@@ -547,6 +585,16 @@ class BoardSchema(ma.Schema):
 
 board_schema = BoardSchema()
 boards_schema = BoardSchema(many=True)
+
+
+class SubscriberSchema(ma.Schema):
+    """Some info"""
+    class Meta:
+        """Some info"""
+        fields = ('sid','bid')
+
+subscriber_schema = SubscriberSchema()
+subscribers_schema = SubscriberSchema(many=True)
 
 
 class MessageSchema(ma.Schema):
