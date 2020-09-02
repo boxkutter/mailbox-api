@@ -1,0 +1,4 @@
+{
+    "python.pythonPath": "c:\\Python\\mailbox-api\\venv\\Scripts\\python.exe",
+    "python.linting.pylintArgs": ["--load-plugins", "pylint_flask_sqlalchemy", "pylint_flask"]
+}
