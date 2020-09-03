@@ -5,6 +5,12 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime
 
 
+
+
+
+
+# Data
+
 class Organization(db.Model):
     """Some info"""
     __tablename__ = 'organizations'
@@ -312,3 +318,52 @@ def db_test():
     db.session.commit()
     
     print('Test data added')
+
+
+
+
+
+
+# Class functions
+
+class Inbox:
+
+    def __init__(self, uid):
+      self.uid = uid
+
+    def list(self):
+        subscriptions = []
+        
+        s = Subscriber.query.filter_by(uid=self.uid).all()
+
+        for x in s: # loop my subscriptions
+
+            board = Board.query.filter_by(bid=x.bid).first()
+
+            messages = []
+        
+            m = Message.query.filter_by(bid=x.bid).all()
+
+            for y  in m:
+                msg = {
+                    "mid": y.mid,
+                    "uid": y.uid,
+                    "messages": y.message
+                }
+                messages.append(msg)
+                
+            sub = {
+                "bid": board.bid,
+                "subject": board.subject,
+                "message": messages
+            }
+            subscriptions.append(sub)
+
+        return subscriptions
+
+    def topic(self):
+        return []
+
+    def message(self):
+        return []
+

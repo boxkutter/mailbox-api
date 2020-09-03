@@ -1,10 +1,10 @@
 """Application routes."""
 from datetime import datetime
 from flask import jsonify, current_app as app
-from .models import Organization, User, Board, Subscriber, Message, Attachment, Timeline, organizations_schema, organization_schema, users_schema, user_schema, message_schema, messages_schema, board_schema, boards_schema,subscribers_schema
+from .models import Inbox, Organization, User, Board, Subscriber, Message, Attachment, Timeline, organizations_schema, organization_schema, users_schema, user_schema, message_schema, messages_schema, board_schema, boards_schema,subscribers_schema
 
 OID=1
-UID=1
+UID=2
 
 @app.route("/")
 def home():
@@ -15,14 +15,48 @@ def home():
         "Git": "https://github.com/boxkutter/mailbox-api",
     }
 
-@app.route("/info")
+
+
+# Inbox
+
+@app.route('/inbox', methods=['GET'])
 def info():
-    """Default info"""
-    return {
-        "App": "my mailbox-api",
-        "API": "2",
-        "Git": "https://github.com/boxkutter/mailbox-apix",
-    }
+    """Lists topics in my inbox"""
+    inbox = Inbox(UID)
+    if inbox:
+        return jsonify(inbox.list())
+    else:
+        return jsonify(message="Inbox doesn't exist"), 401
+    
+
+@app.route('/inbox/<int:bid>', methods=['GET'])
+def board(bid: int):
+    """List messages in a topic"""
+    #inbox = Inbox(UID)
+    board = Board.query.filter_by(bid=bid).first()
+    if board:
+        result = board_schema.dump(board)
+        return jsonify(result)
+    else:
+        return jsonify(message="Board doesn't exist"), 401
+
+
+@app.route('/inbox/<int:bid>/<int:mid>', methods=['GET'])
+def message(bid: int, mid: int):
+    """Display a message from my inbox"""
+    message = Message.query.filter_by(bid=bid, mid=mid).first()
+    if message:
+        result = message_schema.dump(message)
+        return jsonify(result)
+    else:
+        return jsonify(message="Message doesn't exist"), 401
+
+
+
+
+
+
+# Direct calls
 
 @app.route('/organizations', methods=['GET'])
 def organizations():
@@ -71,36 +105,6 @@ def subscribers():
 
 
 # User functions
-
-@app.route('/message-board')
-def message_board():
-    """List all the messages on boards Im subscribed to"""
-  
-    subscriptions = []
-    for subscription in db.session.query(Subscriber).filter_by(uid=UID):
-        board = db.session.query(Board).filter_by(bid=subscription.bid).first()
-
-        messages = []
-        for message in db.session.query(Message).filter_by(bid=board.bid):
-            msg = {
-                "mid": message.mid,
-                "uid": message.uid,
-                "message": message.message 
-            }
-            messages.append(msg)
-
-        subscribed = { 
-            "bid": board.bid, 
-            "subject": board.subject, 
-            "uid": board.uid,
-            "messages": messages
-        }
-        subscriptions.append(subscribed)
-        
-    return jsonify(subscriptions)
-
-  
-
 
 @app.route('/boards')
 def boards():

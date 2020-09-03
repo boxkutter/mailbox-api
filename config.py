@@ -1,4 +1,5 @@
 """Flask configuration variables."""
+# pylint: disable=missing-docstring,too-few-public-methods,invalid-name
 import os
 from os import environ, path
 from dotenv import load_dotenv
