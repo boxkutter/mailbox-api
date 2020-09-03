@@ -15,6 +15,6 @@ class Config:
     FLASK_ENV = environ.get('FLASK_ENV')
 
     # Database
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'messages.db') 
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'mailbox.db') 
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
