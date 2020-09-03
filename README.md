@@ -18,6 +18,7 @@ pip install flask
 pip install flask-sqlalchemy
 pip install flask-marshmallow
 pip install marshmallow-sqlalchemy
+pip install python-dotenv
 
 # Setup test database
 
