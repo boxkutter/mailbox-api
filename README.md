@@ -33,3 +33,20 @@ To remove: db_drop
 flask run
 
 And go to http://localhost:5000
+
+# API Use
+
+
+/mailbox/ - Lists all mailbox topics [GET]
+/mailbox/<topic_id>/ - List all message in a topic [GET]
+/mailbox/<topic_id>/<message_id>/ - Read a single message [GET]
+
+/mailbox/create-topic [POST] fields: subject
+/mailbox/delete-topic [DELETE]
+/mailbox/create-message [POST] fields: subject-id
+/mailbox/delete-message [DELETE]
+
+/mailbox/
+
+
+
